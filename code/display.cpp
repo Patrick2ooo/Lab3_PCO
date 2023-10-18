@@ -256,7 +256,7 @@ void Display::set_link(int from, int to){
         /*Link Factory -> Wholesaler*/
         line = QLine(QPoint(pFrom.x(), pFrom.y() + (m_productItem[from]->pixmap().height()/2)),
                      QPoint(pTo.x() + ((ELEMENT_WIDTH)*2) + 50, pTo.y() + (m_productItem[to]->pixmap().height()/2)));
-        QPen pen(penColors[from % penColors.size()]);
+        QPen pen(penColors[6 % penColors.size()]);
         pen.setWidth(2);
 
         m_scene->addLine(line, pen);
