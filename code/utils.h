@@ -44,6 +44,8 @@ private:
     void run();
 
     PcoSemaphore semEnd{0};
+
+
 public:
     Utils(int nbExtractor, int nbFactory, int nbWholesale);
 
