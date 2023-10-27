@@ -5,6 +5,7 @@
 #include <pcosynchro/pcothread.h>
 
 WindowInterface* Wholesale::interface = nullptr;
+extern bool Run;
 
 Wholesale::Wholesale(int uniqueId, int fund)
     : Seller(fund, uniqueId)
@@ -38,6 +39,12 @@ void Wholesale::buyResources() {
     interface->consoleAppendText(uniqueId, QString("I would like to buy %1 of ").arg(qty) %
                                  getItemName(i) % QString(" which would cost me %1").arg(price));
     /* TODO */
+    /* done */
+    if(m.at(i) >= qty){
+        int price = s->trade(i, qty);
+        money -= price;
+        stocks.at(i) += qty;
+    }
 }
 
 void Wholesale::run() {
@@ -48,7 +55,7 @@ void Wholesale::run() {
     }
 
     interface->consoleAppendText(uniqueId, "[START] Wholesaler routine");
-    while (true /* TODO terminaison*/) {
+    while (Run) {
         buyResources();
         interface->updateFund(uniqueId, money);
         interface->updateStock(uniqueId, &stocks);
@@ -65,9 +72,12 @@ std::map<ItemType, int> Wholesale::getItemsForSale() {
 }
 
 int Wholesale::trade(ItemType it, int qty) {
-
-    // TODO
-
+    if(getItemsForSale().at(it) >= qty && qty > 0){
+        stocks.at(it) -= qty;
+        int order = getCostPerUnit(it)*qty;
+        this->money += order;
+        return order;
+    }
     return 0;
 }
 

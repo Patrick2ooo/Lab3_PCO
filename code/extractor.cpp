@@ -2,6 +2,8 @@
 #include "costs.h"
 #include <pcosynchro/pcothread.h>
 
+extern bool Run;
+
 WindowInterface* Extractor::interface = nullptr;
 
 Extractor::Extractor(int uniqueId, int fund, ItemType resourceExtracted)
@@ -20,14 +22,21 @@ std::map<ItemType, int> Extractor::getItemsForSale() {
 
 int Extractor::trade(ItemType it, int qty) {
     // TODO
-
+    if(getItemsForSale().at(it) >= qty && qty > 0){
+        stocks.at(it) -= qty;
+        int order = getCostPerUnit(it)*qty;
+        interface->consoleAppendText(uniqueId, QString("A trade of %1 of ").arg(qty) % getItemName(it) % QString("was made"));
+        money += order;
+        return order;
+    }
+    interface->consoleAppendText(uniqueId, QString("I don't have enough ressources to trade"));
     return 0;
 }
 
 void Extractor::run() {
     interface->consoleAppendText(uniqueId, "[START] Mine routine");
 
-    while (true /* TODO terminaison*/) {
+    while (Run) {
         /* TODO concurrence */
 
         int minerCost = getEmployeeSalary(getEmployeeThatProduces(resourceExtracted));

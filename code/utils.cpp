@@ -1,8 +1,10 @@
 #include "utils.h"
 
+bool Run = true;
 
 void Utils::endService() {
     // TODO
+    Run = false;
     std::cout << "It's time to end !" << std::endl;
 }
 
@@ -10,7 +12,6 @@ void Utils::externalEndService() {
     endService();
     semEnd.acquire();
     utilsThread->join();
-
 }
 
 std::vector<Extractor*> createExtractors(int nbExtractors, int idStart) {
