@@ -3,9 +3,14 @@
 #include "costs.h"
 #include <iostream>
 #include <pcosynchro/pcothread.h>
+#include <pcosynchro/pcomutex.h>
 
 WindowInterface* Wholesale::interface = nullptr;
 extern bool Run;
+
+PcoMutex mtxWholesaleStocks;
+PcoMutex mtxWholesaleMoney;
+PcoMutex mtxWholesaleTrade;
 
 Wholesale::Wholesale(int uniqueId, int fund)
     : Seller(fund, uniqueId)
@@ -40,11 +45,13 @@ void Wholesale::buyResources() {
                                  getItemName(i) % QString(" which would cost me %1").arg(price));
     /* TODO */
     /* done */
+    mtxWholesaleStocks.lock();
     if(m.at(i) >= qty){
         int price = s->trade(i, qty);
         money -= price;
         stocks.at(i) += qty;
     }
+    mtxWholesaleStocks.unlock();
 }
 
 void Wholesale::run() {

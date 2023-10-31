@@ -1,8 +1,11 @@
 #include "extractor.h"
 #include "costs.h"
 #include <pcosynchro/pcothread.h>
+#include <pcosynchro/pcomutex.h>
 
 extern bool Run;
+PcoMutex mtxExtractorMoney;
+PcoMutex mtxExtractorStocks;
 
 WindowInterface* Extractor::interface = nullptr;
 
@@ -23,10 +26,14 @@ std::map<ItemType, int> Extractor::getItemsForSale() {
 int Extractor::trade(ItemType it, int qty) {
     // TODO
     if(getItemsForSale().at(it) >= qty && qty > 0){
+        mtxExtractorStocks.lock();
         stocks.at(it) -= qty;
+        mtxExtractorStocks.unlock();
         int order = getCostPerUnit(it)*qty;
         interface->consoleAppendText(uniqueId, QString("A trade of %1 of ").arg(qty) % getItemName(it) % QString("was made"));
+        mtxExtractorMoney.lock();
         money += order;
+        mtxExtractorMoney.unlock();
         return order;
     }
     interface->consoleAppendText(uniqueId, QString("I don't have enough ressources to trade"));
@@ -47,14 +54,18 @@ void Extractor::run() {
             continue;
         }
 
+        mtxExtractorMoney.lock();
         /* On peut payer un mineur */
         money -= minerCost;
+        mtxExtractorMoney.unlock();
         /* Temps aléatoire borné qui simule le mineur qui mine */
         PcoThread::usleep((rand() % 100 + 1) * 10000);
         /* Statistiques */
         nbExtracted++;
         /* Incrément des stocks */
+        mtxExtractorStocks.lock();
         stocks[resourceExtracted] += 1;
+        mtxExtractorStocks.unlock();
         /* Message dans l'interface graphique */
         interface->consoleAppendText(uniqueId, QString("1 ") % getItemName(resourceExtracted) %
                                      " has been mined");
