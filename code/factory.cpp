@@ -62,23 +62,26 @@ void Factory::buildItem() {
     ItemType item = Factory::getItemBuilt();
     EmployeeType myEmployee = getEmployeeThatProduces(item);
     int salary = getEmployeeSalary(myEmployee);
-    if(salary < this->money){
-        mtxFactoryMoney.lock();
-        this->money -= salary;
-        mtxFactoryMoney.unlock();
+    mtxFactoryMoney.lock();
+    if(salary <= money){
+        mtxFactoryStocks.lock();
+        money -= salary;
+        nbBuild++;
+        mtxFactoryStocks.unlock();
         //Temps simulant l'assemblage d'un objet.
         PcoThread::usleep((rand() % 100) * 100000);
 
         // TODO
         /* mettre à jour les stock de nos produit créé*/
         mtxFactoryStocks.lock();
-        for(ItemType items : this->resourcesNeeded){
-            this->stocks.at(items) -= 1;
+        for(ItemType items : resourcesNeeded){
+            this->stocks[items] -= 1;
         }
-        this->stocks.at(item) += 1;
+        this->stocks[item] += 1;
         mtxFactoryStocks.unlock();
         interface->consoleAppendText(uniqueId, "Factory have build a new object");
     }
+    mtxFactoryMoney.unlock();
 }
 
 void Factory::orderResources() {
@@ -89,11 +92,11 @@ void Factory::orderResources() {
      */
     for(Wholesale* wholesaler : wholesalers){
         for(ItemType item : resourcesNeeded){
+            mtxFactoryTrade.lock();
             if(stocks[item] == 0 && wholesaler->getItemsForSale()[item] > 0 && getCostPerUnit(item) <= this->money){
                 int price = getCostPerUnit(item);
                 interface->consoleAppendText(uniqueId, QString("I would like to buy %1 of ").arg(1) %
-                                             getItemName(item) % QString(" which would cost me %1").arg(price));
-                mtxFactoryTrade.lock();
+                                             getItemName(item) % QString(" which would cost me %1").arg(price));        
                 int cost = wholesaler->trade(item, 1);
                 if(cost != 0){                  
                     money -= cost;
@@ -103,8 +106,9 @@ void Factory::orderResources() {
                 else{
                     interface->consoleAppendText(uniqueId, QString("pas de stock"));
                 }
-                mtxFactoryTrade.unlock();
+
             }
+            mtxFactoryTrade.unlock();
         }
     }
 
@@ -139,14 +143,14 @@ std::map<ItemType, int> Factory::getItemsForSale() {
 }
 
 int Factory::trade(ItemType it, int qty) {
-    if(getItemsForSale().at(it) >= qty && qty > 0){
-        mtxFactoryStocks.lock();
-        stocks.at(it) -= qty;
-        mtxFactoryStocks.unlock();
+    if(getItemsForSale()[it] >= qty && qty > 0){
+        //mtxFactoryMoney.lock();
+        stocks[it] -= qty;
+        //mtxFactoryMoney.unlock();
         int order = getCostPerUnit(it)*qty;
-        mtxFactoryMoney.lock();
-        this->money += order;
-        mtxFactoryMoney.unlock();
+        //mtxFactoryMoney.lock();
+        money += order;
+        //mtxFactoryMoney.unlock();
         return order;
     }
     return 0;

@@ -46,10 +46,10 @@ void Wholesale::buyResources() {
     /* TODO */
     /* done */
     mtxWholesaleStocks.lock();
-    if(m.at(i) >= qty){
-        int price = s->trade(i, qty);
+    if(m[i] >= qty && price <= money){
+        s->trade(i, qty);
         money -= price;
-        stocks.at(i) += qty;
+        stocks[i] += qty;
     }
     mtxWholesaleStocks.unlock();
 }
@@ -66,6 +66,7 @@ void Wholesale::run() {
         buyResources();
         interface->updateFund(uniqueId, money);
         interface->updateStock(uniqueId, &stocks);
+
         //Temps de pause pour espacer les demandes de ressources
         PcoThread::usleep((rand() % 10 + 1) * 100000);
     }
@@ -79,10 +80,10 @@ std::map<ItemType, int> Wholesale::getItemsForSale() {
 }
 
 int Wholesale::trade(ItemType it, int qty) {
-    if(getItemsForSale().at(it) >= qty && qty > 0){
-        stocks.at(it) -= qty;
+    if(getItemsForSale()[it]>= qty && qty > 0){
+        stocks[it] -= qty;
         int order = getCostPerUnit(it)*qty;
-        this->money += order;
+        money += order;
         return order;
     }
     return 0;

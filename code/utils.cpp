@@ -3,13 +3,10 @@
 
 bool Run = true;
 
-PcoMutex mtxUtils;
 
 void Utils::endService() {
     // TODO
-    mtxUtils.lock();
     Run = false;
-    mtxUtils.unlock();
     std::cout << "It's time to end !" << std::endl;
 }
 

@@ -25,15 +25,11 @@ std::map<ItemType, int> Extractor::getItemsForSale() {
 
 int Extractor::trade(ItemType it, int qty) {
     // TODO
-    if(getItemsForSale().at(it) >= qty && qty > 0){
-        mtxExtractorStocks.lock();
-        stocks.at(it) -= qty;
-        mtxExtractorStocks.unlock();
+    if(getItemsForSale()[it] >= qty && qty > 0){
+        stocks[it] -= qty;
         int order = getCostPerUnit(it)*qty;
         interface->consoleAppendText(uniqueId, QString("A trade of %1 of ").arg(qty) % getItemName(it) % QString("was made"));
-        mtxExtractorMoney.lock();
         money += order;
-        mtxExtractorMoney.unlock();
         return order;
     }
     interface->consoleAppendText(uniqueId, QString("I don't have enough ressources to trade"));
@@ -47,23 +43,23 @@ void Extractor::run() {
         /* TODO concurrence */
 
         int minerCost = getEmployeeSalary(getEmployeeThatProduces(resourceExtracted));
+        mtxExtractorMoney.lock();
         if (money < minerCost) {
             /* Pas assez d'argent */
             /* Attend des jours meilleurs */
-            PcoThread::usleep(1000U);
+            PcoThread::usleep(1000U);           
             continue;
         }
 
-        mtxExtractorMoney.lock();
         /* On peut payer un mineur */
         money -= minerCost;
         mtxExtractorMoney.unlock();
         /* Temps aléatoire borné qui simule le mineur qui mine */
         PcoThread::usleep((rand() % 100 + 1) * 10000);
+        mtxExtractorStocks.lock();
         /* Statistiques */
         nbExtracted++;
         /* Incrément des stocks */
-        mtxExtractorStocks.lock();
         stocks[resourceExtracted] += 1;
         mtxExtractorStocks.unlock();
         /* Message dans l'interface graphique */
@@ -71,7 +67,7 @@ void Extractor::run() {
                                      " has been mined");
         /* Update de l'interface graphique */
         interface->updateFund(uniqueId, money);
-        interface->updateStock(uniqueId, &stocks);
+        interface->updateStock(uniqueId, &stocks);      
     }
     interface->consoleAppendText(uniqueId, "[STOP] Mine routine");
 }
