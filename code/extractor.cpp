@@ -47,7 +47,8 @@ void Extractor::run() {
         if (money < minerCost) {
             /* Pas assez d'argent */
             /* Attend des jours meilleurs */
-            PcoThread::usleep(1000U);           
+            PcoThread::usleep(1000U);
+            mtxExtractorMoney.unlock();
             continue;
         }
 

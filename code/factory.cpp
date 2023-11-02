@@ -64,21 +64,21 @@ void Factory::buildItem() {
     int salary = getEmployeeSalary(myEmployee);
     mtxFactoryMoney.lock();
     if(salary <= money){
-        mtxFactoryStocks.lock();
+        //mtxFactoryStocks.lock();
         money -= salary;
         nbBuild++;
-        mtxFactoryStocks.unlock();
+        //mtxFactoryStocks.unlock();
         //Temps simulant l'assemblage d'un objet.
         PcoThread::usleep((rand() % 100) * 100000);
 
         // TODO
         /* mettre à jour les stock de nos produit créé*/
-        mtxFactoryStocks.lock();
+        //mtxFactoryStocks.lock();
         for(ItemType items : resourcesNeeded){
             this->stocks[items] -= 1;
         }
         this->stocks[item] += 1;
-        mtxFactoryStocks.unlock();
+        //mtxFactoryStocks.unlock();
         interface->consoleAppendText(uniqueId, "Factory have build a new object");
     }
     mtxFactoryMoney.unlock();

@@ -71,8 +71,6 @@ void Wholesale::run() {
         PcoThread::usleep((rand() % 10 + 1) * 100000);
     }
     interface->consoleAppendText(uniqueId, "[STOP] Wholesaler routine");
-
-
 }
 
 std::map<ItemType, int> Wholesale::getItemsForSale() {
