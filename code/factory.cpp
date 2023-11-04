@@ -1,3 +1,13 @@
+// Fichier              :   factory.cpp
+// Date modification    :   02.11.2023
+// Auteurs              :   Auberson Kevin, Maillard Patrick
+// Modification         :   implémentation de la fonction trade qui permet
+//                          à un autre thread d’essayer d’effectuer un achat,
+//                          buildItem qui permet à l’usine de construire un
+//                          objet selon le type qu’elle produit, orderResources
+//                          qui permet aux usines d’acheter des ressources
+//                          aux grossistes.
+
 #include "factory.h"
 #include "extractor.h"
 #include "costs.h"
@@ -12,7 +22,6 @@ extern bool Run;
 
 PcoMutex mtxFactoryTrade;
 PcoMutex mtxFactoryMoney;
-PcoMutex mtxFactoryStocks;
 
 Factory::Factory(int uniqueId, int fund, ItemType builtItem, std::vector<ItemType> resourcesNeeded)
     : Seller(fund, uniqueId), resourcesNeeded(resourcesNeeded), itemBuilt(builtItem), nbBuild(0)
@@ -51,9 +60,11 @@ bool Factory::verifyResources() {
     return true;
 }
 
+/**
+ * @brief Factory::buildItem
+ */
 void Factory::buildItem() {
 
-    // TODO
     /*  - regarder quelle type de produit l'on fabrique
      *  - commander un employé avec getEmployeeThatProduces et getEmployeeSalary
      *  - checker s'il on a assez d'argent pour commander un employé.
@@ -64,26 +75,23 @@ void Factory::buildItem() {
     int salary = getEmployeeSalary(myEmployee);
     mtxFactoryMoney.lock();
     if(salary <= money){
-        //mtxFactoryStocks.lock();
         money -= salary;
         nbBuild++;
-        //mtxFactoryStocks.unlock();
         //Temps simulant l'assemblage d'un objet.
         PcoThread::usleep((rand() % 100) * 100000);
-
-        // TODO
         /* mettre à jour les stock de nos produit créé*/
-        //mtxFactoryStocks.lock();
         for(ItemType items : resourcesNeeded){
             this->stocks[items] -= 1;
         }
         this->stocks[item] += 1;
-        //mtxFactoryStocks.unlock();
         interface->consoleAppendText(uniqueId, "Factory have build a new object");
     }
     mtxFactoryMoney.unlock();
 }
 
+/**
+ * @brief Factory::orderResources
+ */
 void Factory::orderResources() {
 
     // TODO - Itérer sur les resourcesNeeded et les wholesalers disponibles
@@ -114,9 +122,6 @@ void Factory::orderResources() {
 
     //Temps de pause pour éviter trop de demande
     PcoThread::usleep(10 * 100000);
-
-
-
 }
 
 void Factory::run() {
@@ -142,15 +147,17 @@ std::map<ItemType, int> Factory::getItemsForSale() {
     return std::map<ItemType, int>({{itemBuilt, stocks[itemBuilt]}});
 }
 
+/**
+ * @brief Factory::trade
+ * @param it type de ressource à coommander
+ * @param qty le nombre de ressource
+ * @return la commande
+ */
 int Factory::trade(ItemType it, int qty) {
     if(getItemsForSale()[it] >= qty && qty > 0){
-        //mtxFactoryMoney.lock();
         stocks[it] -= qty;
-        //mtxFactoryMoney.unlock();
         int order = getCostPerUnit(it)*qty;
-        //mtxFactoryMoney.lock();
         money += order;
-        //mtxFactoryMoney.unlock();
         return order;
     }
     return 0;

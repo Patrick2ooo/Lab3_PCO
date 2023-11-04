@@ -1,3 +1,12 @@
+// Fichier              :   wholesale.cpp
+// Date modification    :   02.11.2023
+// Auteurs              :   Auberson Kevin, Maillard Patrick
+// Modification         :   implémentation de la fonction trade qui permet
+//                          aux usines d’acheter des objets aux grossistes
+//                          et buyResources qui est la routine d’achat de
+//                          ressources produites par les extracteurs et
+//                          les usines
+
 #include "wholesale.h"
 #include "factory.h"
 #include "costs.h"
@@ -7,10 +16,7 @@
 
 WindowInterface* Wholesale::interface = nullptr;
 extern bool Run;
-
-PcoMutex mtxWholesaleStocks;
-PcoMutex mtxWholesaleMoney;
-PcoMutex mtxWholesaleTrade;
+PcoMutex mtxWholesale;
 
 Wholesale::Wholesale(int uniqueId, int fund)
     : Seller(fund, uniqueId)
@@ -27,7 +33,9 @@ void Wholesale::setSellers(std::vector<Seller*> sellers) {
         interface->setLink(uniqueId, seller->getUniqueId());
     }
 }
-
+/**
+ * @brief Wholesale::buyResources
+ */
 void Wholesale::buyResources() {
     auto s = Seller::chooseRandomSeller(sellers);
     auto m = s->getItemsForSale();
@@ -41,23 +49,25 @@ void Wholesale::buyResources() {
     int qty = rand() % 5 + 1;
     int price = qty * getCostPerUnit(i);
 
-    interface->consoleAppendText(uniqueId, QString("I would like to buy %1 of ").arg(qty) %
-                                 getItemName(i) % QString(" which would cost me %1").arg(price));
-    /* TODO */
-    /* done */
-    mtxWholesaleStocks.lock();
+    interface->consoleAppendText(
+                uniqueId,
+                QString("I would like to buy %1 of ").arg(qty) %getItemName(i)%
+                QString(" which would cost me %1").arg(price));
+
+    mtxWholesale.lock();
     if(m[i] >= qty && price <= money){
         s->trade(i, qty);
         money -= price;
         stocks[i] += qty;
     }
-    mtxWholesaleStocks.unlock();
+    mtxWholesale.unlock();
 }
 
 void Wholesale::run() {
 
     if (sellers.empty()) {
-        std::cerr << "You have to give factories and mines to a wholeseler before launching is routine" << std::endl;
+        std::cerr << "You have to give factories and mines to a \
+            wholeseler before launching is routine" << std::endl;
         return;
     }
 
@@ -77,6 +87,12 @@ std::map<ItemType, int> Wholesale::getItemsForSale() {
     return stocks;
 }
 
+/**
+ * @brief Wholesale::trade
+ * @param it type de ressource à coommander
+ * @param qty le nombre de ressource
+ * @return la commande
+ */
 int Wholesale::trade(ItemType it, int qty) {
     if(getItemsForSale()[it]>= qty && qty > 0){
         stocks[it] -= qty;

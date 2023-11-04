@@ -1,9 +1,22 @@
+// Fichier              :   utils.cpp
+// Date modification    :   02.11.2023
+// Auteurs              :   Auberson Kevin, Maillard Patrick
+// Modification         :   implémentation endService arret de la simulation
+//
 #include "utils.h"
 #include <pcosynchro/pcomutex.h>
 
+/*
+ * Flag permettant d'arrêter les boucle while pour les achats
+ * Utilisation : wholesale::run (lecture), factory:::run (lecture), extractor::run (lecture)
+ *               endService (écriture)
+ * Protection  : aucune
+ */
 bool Run = true;
 
-
+/*
+ * arrête de la simulation
+ */
 void Utils::endService() {
     // TODO
     Run = false;
@@ -112,11 +125,20 @@ Utils::Utils(int nbExtractor, int nbFactory, int nbWholesale) {
 
     for(auto& w : wholesalers) {
 
-        std::vector<Extractor*> tmpExtractors(extractors.begin() + countExtractor, extractors.begin() + countExtractor + extractorsByWholesaler);
-        tmpExtractors.insert(tmpExtractors.end(), extractors.end() - extractorsShared, extractors.end());
+        std::vector<Extractor*> tmpExtractors(
+                    extractors.begin() + countExtractor,
+                    extractors.begin() + countExtractor +
+                    extractorsByWholesaler);
+        tmpExtractors.insert(tmpExtractors.end(),
+                             extractors.end() - extractorsShared,
+                             extractors.end());
 
-        std::vector<Factory*> tmpFactories(factories.begin() + countFactory, factories.begin() + countFactory + factoriesByWholesaler);
-        tmpFactories.insert(tmpFactories.end(), factories.end() - factoriesShared, factories.end());
+        std::vector<Factory*> tmpFactories(factories.begin() + countFactory,
+                                           factories.begin() + countFactory +
+                                           factoriesByWholesaler);
+        tmpFactories.insert(tmpFactories.end(),
+                            factories.end() - factoriesShared,
+                            factories.end());
 
         countExtractor += extractorsByWholesaler;
         countFactory += factoriesByWholesaler;
@@ -134,20 +156,25 @@ Utils::Utils(int nbExtractor, int nbFactory, int nbWholesale) {
 
 void Utils::run() {
     for(size_t i = 0; i < extractors.size(); ++i) {
-        threads.emplace_back(std::make_unique<PcoThread>(&Extractor::run, extractors[i]));
+        threads.emplace_back(std::make_unique<PcoThread>(&Extractor::run,
+                                                         extractors[i]));
     }
     for(size_t i = 0; i < factories.size(); ++i) {
-        threads.emplace_back(std::make_unique<PcoThread>(&Factory::run, factories[i]));
+        threads.emplace_back(std::make_unique<PcoThread>(&Factory::run,
+                                                         factories[i]));
     }
     for(size_t i = 0; i < wholesalers.size(); ++i) {
-        threads.emplace_back(std::make_unique<PcoThread>(&Wholesale::run, wholesalers[i]));
+        threads.emplace_back(std::make_unique<PcoThread>(&Wholesale::run,
+                                                         wholesalers[i]));
     }
 
     for (auto& thread : threads) {
         thread->join();
     }
 
-    int startFund = (EXTRACTOR_FUND * int(extractors.size()) + (FACTORIES_FUND * int(factories.size()) + (WHOLESALERS_FUND * int(wholesalers.size()))));
+    int startFund = (EXTRACTOR_FUND * int(extractors.size()) +
+                     (FACTORIES_FUND * int(factories.size()) +
+                      (WHOLESALERS_FUND * int(wholesalers.size()))));
     int endFund = 0;
 
     for(Extractor* extractor: extractors) {
@@ -164,9 +191,11 @@ void Utils::run() {
         endFund += wholesale->getFund();
     }
 
-    finalReport = QString("The expected fund is : %1 and you got at the end : %2").arg(startFund).arg(endFund);
+    finalReport = QString("The expected fund is : %1 "
+                    "and you got at the end : %2").arg(startFund).arg(endFund);
 
-    qInfo() << "The expected fund is : " << startFund << " and you got at the end : " << endFund;
+    qInfo() << "The expected fund is : " << startFund <<
+               " and you got at the end : " << endFund;
     semEnd.release();
 }
 

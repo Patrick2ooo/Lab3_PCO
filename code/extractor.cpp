@@ -1,3 +1,10 @@
+// Fichier              :   extractor.cpp
+// Date modification    :   02.11.2023
+// Auteurs              :   Auberson Kevin, Maillard Patrick
+// Modification         :   implémentation de la fonction trade qui permet
+//                          à un autre thread d’essayer d’effectuer un achat
+//                          et run mise en place de mutex
+
 #include "extractor.h"
 #include "costs.h"
 #include <pcosynchro/pcothread.h>
@@ -23,6 +30,12 @@ std::map<ItemType, int> Extractor::getItemsForSale() {
     return stocks;
 }
 
+/**
+ * @brief Extractor::trade
+ * @param it type de ressource à coommander
+ * @param qty le nombre de ressource
+ * @return la commande
+ */
 int Extractor::trade(ItemType it, int qty) {
     // TODO
     if(getItemsForSale()[it] >= qty && qty > 0){
