@@ -24,4 +24,4 @@ Les grossistes peuvent acheter des ressources auprès des extracteurs et des usi
 ## Tests effectués
 
 
-Description de chaque test, et information sur le fait qu'il ait passé ou non
+Concernant les tests effectués nous nous sommes simplement servi de l'UI afin de voir si tout se passait correctement, donc pas de disparition ou d'ajout de ressources dans les différents affichages de l'UI. Pour les fonds, le contrôle a été fait à l'aide de la fenêtre de calcul des fonds apparaissant à la fermeture du programme.
